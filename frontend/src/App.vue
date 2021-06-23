@@ -1,32 +1,38 @@
 <template>
   <div id="app">
-    <div id="nav">
-      <router-link to="/">Home</router-link> |
-      <router-link to="/about">About</router-link>
-    </div>
-    <router-view/>
+    <a-layout style="Height:100%">
+      <div>
+        <headNav></headNav>
+      </div>
+      <a-layout-content style scoped="minHeight:calc(100% - 250px)">
+        <router-view></router-view>
+      </a-layout-content>
+      <a-layout-footer style="text-align:center; Height:50px">
+        <nfooter />
+      </a-layout-footer>
+    </a-layout>
   </div>
 </template>
 
+<script>
+import headNav from './components/headNav'
+import footer from './components/footer'
+export default {
+  name: 'app',
+  components: {
+    'headNav':headNav,
+    'nfooter':footer
+  }
+}
+</script>
+
 <style>
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
   color: #2c3e50;
-}
-
-#nav {
-  padding: 30px;
-}
-
-#nav a {
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-#nav a.router-link-exact-active {
-  color: #42b983;
+  margin:0 auto;
+  min-width: 1200px;
 }
 </style>
