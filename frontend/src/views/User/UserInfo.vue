@@ -81,6 +81,7 @@ export default {
           }).then((res)=>{
             console.log(res)
             window.alert(res.data.msg)
+            location.reload()
           })
         },
         handleSubmitPsw(e){
@@ -101,6 +102,7 @@ export default {
               console.log(res)
               if(res.data.code==0){
                 window.alert("修改成功")
+                location.reload()
               }
               else if(res.data.code==-2){
                 window.alert("旧密码错误")
@@ -114,7 +116,7 @@ export default {
     },
     mounted:function(){
       console.log(this.$store.state.user)
-      console.log(this.$store.state.user.email)
+      console.log(this.$store.state.user.name)
       this.axios.get('/api/getUser',{
         params:{
           token:this.$store.state.user.token
@@ -122,6 +124,8 @@ export default {
       }).then((res)=>{
         if(res.data.code==0){
           this.nickname=res.data.data
+          this.$store.commit('setUser',res.data.data)
+          
         }
         else
           window.alert("获取用户信息失败，请重新登录！")

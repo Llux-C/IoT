@@ -2,7 +2,7 @@
     
         <a-menu
           mode="inline"
-          :default-selected-keys="['4']"
+          :default-selected-keys="[]"
           :default-open-keys="['sub1']"
           :style="{ height: '100%', borderRight: 0 }"
         >

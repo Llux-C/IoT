@@ -266,7 +266,7 @@ export default {
             {
               window.alert("登录成功")
               // todo: 保存登录信息
-              this.$store.commit('setUser',values.email)
+              this.$store.commit('setEmail',values.email)
               this.$store.commit('setToken',response.data.data)
               console.log(this.$store.state.user.token)
               console.log(this.$store.state.user.email)

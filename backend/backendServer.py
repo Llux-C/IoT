@@ -105,11 +105,10 @@ def login():
 @app.route('/getUser', methods=['GET'])
 def getUser():
     token_received = request.args.get('token')
-    print(token)
     user = token.verify_token(token_received)
     if user is None:
         return jsonify(code=-1, msg="Token has been 失效!")
-    return jsonify(code=0,msg="getSuccess!",data=user.name)
+    return jsonify(code=0, msg="getSuccess!", data=user.name)
 
 
 @app.route('/alterPassword', methods=['POST'])
@@ -133,38 +132,48 @@ def alterName():
     data = json.loads(request.data)
     token_received = data["token"]
     new_name = data["newName"]
-    tmp = User.query.get(new_name)
-    if tmp is not None:
+    print(new_name)
+    tmp = User.query.filter(User.name == new_name).all()
+    if len(tmp) != 0:
         return jsonify(code=-1, msg="不能改成这个名字!")
     user = token.verify_token(token_received)
     if user is None:
         return jsonify(code=-1, msg="Token has been 失效!")
+
+    # 对设备的主人名称也要进行修改
+    devices = Device.query.filter(Device.user == user.name).all()
+    for device in devices:
+        device.user = new_name
     user.name = new_name
     db.session.commit()
-    return jsonify(code=0, msg="Alter userName success!")
+    return jsonify(code=0, msg="更改名字成功!")
 
 
-@app.route('/getDevice', methods=['GET'])
+@app.route('/getDevice', methods=['GET', 'POST'])
 def getDevice():
-    token_received = request.args.get("token")
-    user = token.verify_token(token_received)
-    if user is None:
-        return jsonify(code=-1, msg="Token has been 失效!")
-    devices = Device.query.filter(Device.user == user.name).all()
-    result = {
-        "code": 0,
-        "data": []
-    }
-    for device in devices:
-        dev = {
-            "code": device.code,
-            "name": device.name,
-            "description": device.description,
-            "create_time": device.create_time,
-            "user": device.user,
+    if request.method == 'GET':
+        token_received = request.args.get("token")
+        user = token.verify_token(token_received)
+        if user is None:
+            return jsonify(code=-1, msg="Token has been 失效!")
+        devices = Device.query.filter(Device.user == user.name).all()
+        result = {
+            "code": 0,
+            "data": []
         }
-        result.get("data").append(dev)
-    return jsonify(code=0, msg="getSuccess!", data=result)
+        for device in devices:
+            dev = {
+                "id": device.id,
+                "code": device.code,
+                "name": device.name,
+                "description": device.description,
+                "create_time": device.create_time,
+                "user": device.user,
+            }
+            result.get("data").append(dev)
+            print(dev)
+        return result
+    # elif request.method == 'POST':
 
 
 @app.route('/selectDevice', methods=['GET'])
@@ -174,13 +183,14 @@ def selectDevice():
     user = token.verify_token(token_received)
     if user is None:
         return jsonify(code=-1, msg="Token has been 失效!")
-    devices = Device.query.filter(Device.user == user.name).filter(Device.name == deviceName).all()
+    devices = Device.query.filter(Device.user == user.name).filter(Device.name.ilike("%" + deviceName + "%")).all()
     result = {
         "code": 0,
         "data": []
     }
     for device in devices:
         dev = {
+            "id": device.id,
             "code": device.code,
             "name": device.name,
             "description": device.description,
@@ -188,7 +198,7 @@ def selectDevice():
             "user": device.user,
         }
         result.get("data").append(dev)
-    return jsonify(code=0, msg="selectSuccess!", data=result)
+    return result
 
 
 @app.route('/alterDevice', methods=['POST'])
@@ -199,19 +209,23 @@ def alterDevice():
     deviceOldName = data["oldName"]
     deviceNewName = data["newName"]
     deviceDescription = data["description"]
+    deviceId = data["id"]
 
     new_device = Device.query.filter(Device.name == deviceNewName).all()
     if new_device is not None:
-        return jsonify(code=-1, msg="The newName has existed and it cannot be the same!")
+        if len(new_device) == 1 and new_device[0].id == deviceId:
+            pass
+        else:
+            return jsonify(code=-1, msg="The newName has existed and it cannot be the same!")
     user = token.verify_token(token_received)
     if user is None:
         return jsonify(code=-1, msg="Token has been 失效!")
     device = Device.query.filter(Device.name == deviceOldName).all()
-    device.code = deviceCode
-    device.name = deviceNewName
-    device.description = deviceDescription
+    device[0].code = deviceCode
+    device[0].name = deviceNewName
+    device[0].description = deviceDescription
     db.session.commit()
-    return jsonify(code=0, msg="alterSuccess!")
+    return jsonify(code=0, msg="修改成功!")
 
 
 @app.route('/createDevice', methods=['POST'])
@@ -228,7 +242,7 @@ def createDevice():
     deviceUser = data["user"]
     result = {
         "code": 0,
-        "message": "create success!"
+        "msg": "create success!"
     }
     new_id = 0
     # 判断是否重名
@@ -236,7 +250,7 @@ def createDevice():
     for device in devices:
         if deviceName == device.name:
             result['code'] = -1
-            result['message'] = "The deviceName has existed!"
+            result['msg'] = "The deviceName has existed!"
             return result
         new_id = device.id
     # 插入
@@ -255,10 +269,11 @@ def deleteDevice():
         return jsonify(code=-1, msg="Token has been 失效!")
 
     deviceName = request.args.get("name")
-    device = Device.query.filter(Device.name == deviceName).all()
-    db.session.delete(device)
+    devices = Device.query.filter(Device.name == deviceName).all()
+    for device in devices:
+        db.session.delete(device)
     db.session.commit()
-    return jsonify(code=0, msg="deleteSuccess!")
+    return jsonify(code=0, msg="删除设备成功!")
 
 
 if __name__ == '__main__':
