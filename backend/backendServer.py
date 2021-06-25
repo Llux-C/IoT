@@ -48,7 +48,7 @@ def register():
     print(name, email, password)
     result = {
         "code": 0,
-        "message": "Register success!"
+        "msg": "Register success!"
     }
     new_id = 0
     # 判断是否重名、重邮箱
@@ -56,7 +56,7 @@ def register():
     for user in users:
         if name == user.name or email == user.email:
             result['code'] = -1
-            result['message'] = "The user_name or email has existed!"
+            result['msg'] = "The user_name or email has existed!"
             return result
         new_id = user.id
     # 插入
@@ -210,9 +210,8 @@ def alterDevice():
     deviceNewName = data["newName"]
     deviceDescription = data["description"]
     deviceId = data["id"]
-
     new_device = Device.query.filter(Device.name == deviceNewName).all()
-    if new_device is not None:
+    if len(new_device)!=0:
         if len(new_device) == 1 and new_device[0].id == deviceId:
             pass
         else:

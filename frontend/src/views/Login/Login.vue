@@ -306,7 +306,7 @@ export default {
           .then((response)=> {
             console.log(response);
             
-            window.alert(response.data.message)
+            window.alert(response.data.msg)
             if(response.data.code === 0){
                 location.reload()
             }
