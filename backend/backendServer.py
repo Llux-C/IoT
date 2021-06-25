@@ -89,12 +89,12 @@ def login():
     user = User.query.filter(User.email == email).all()
     if user is None:
         code = -1
-        message = "Not exist the user!"
+        msg = "Not exist the user!"
         return jsonify(code=code, msg=msg)
     print(user[0].password)
     if user[0].password != password:
         code = -2
-        message = "Password error!"
+        msg = "Password error!"
         return jsonify(code=code, msg=msg)
     token_back = token.create_token(user[0].id)
     print(token_back)
@@ -274,6 +274,67 @@ def deleteDevice():
         db.session.delete(device)
     db.session.commit()
     return jsonify(code=0, msg="删除设备成功!")
+
+
+@app.route('/getRecentDevice', methods=['GET'])
+def getRecentDevice():
+    day_return = []
+    count = [0, 0, 0, 0, 0, 0, 0]
+    token_received = request.args.get("token")
+    user = token.verify_token(token_received)
+    if user is None:
+        return jsonify(code=-1, msg="Token has been 失效!")
+    today = datetime.datetime.today()
+    # 获取过去七天的日期并转化成字符串
+    for i in range(0, 7):
+        daytmp = today - datetime.timedelta(days=i)
+        dayt = daytmp.replace(hour=0, minute=0, second=0, microsecond=0)
+        dayt = datetime.datetime.date(dayt)
+        day_return.append(str(dayt)[5:])
+    day_return.reverse()
+    # 获取设备中创造日期符合过去七天的
+    devices = Device.query.filter(Device.user == user.name).all()
+    for device in devices:
+        device_day = str(datetime.datetime.date(device.create_time))[5:]
+        for i in range(len(day_return)):
+            if day_return[i] == device_day:
+                count[i] += 1
+
+    print(day_return, count)
+    return jsonify(code=0, msg="getRDsuccess!", day=day_return, count=count)
+
+
+@app.route("/getRecentMessage", methods=['GET'])
+def getRecentMessage():
+    day_return = []
+    total = [0, 0, 0, 0, 0, 0, 0]
+    normal = [0, 0, 0, 0, 0, 0, 0]
+    alert = [0, 0, 0, 0, 0, 0, 0]
+    token_received = request.args.get("token")
+    user = token.verify_token(token_received)
+    if user is None:
+        return jsonify(code=-1, msg="Token has been 失效!")
+    today = datetime.datetime.today()
+    # 获取过去七天的日期并转化成字符串
+    for i in range(0, 7):
+        daytmp = today - datetime.timedelta(days=i)
+        dayt = daytmp.replace(hour=0, minute=0, second=0, microsecond=0)
+        dayt = datetime.datetime.date(dayt)
+        day_return.append(str(dayt)[5:])
+    day_return.reverse()
+
+    messages = Message.query.filter().all()
+    for message in messages:
+        message_day = str(datetime.datetime.date(message.timestamp))[5:]
+        for i in range(len(day_return)):
+            if day_return[i] == message_day:
+                total[i] += 1
+                if message.alert == 0:
+                    normal[i] += 1
+                else:
+                    alert[i] += 1
+    print(day_return, total, normal, alert)
+    return jsonify(code=0, msg="getRMsuccess!", day=day_return, total=total, alert=alert, normal=normal)
 
 
 if __name__ == '__main__':
